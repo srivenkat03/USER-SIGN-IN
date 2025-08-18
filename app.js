@@ -1,4 +1,5 @@
 const express = require("express");
+const jwt = require("jsonwebtoken");
 const app = express();
 const path = require("path");
 const { MongoClient } = require("mongodb");
@@ -8,6 +9,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 app.use(express.static("public"));
 
+const JWT_SECRET = "your_jwt_secret";
 const MONGO_URL = process.env.MONGO_URL || "mongodb://root:querty@mongo:27017/Users-db?authSource=admin";
 console.log("Connecting to MongoDB with URL:", MONGO_URL);
 
@@ -54,13 +56,14 @@ app.post("/signin", async (req, res) => {
     const db = client.db(DB_NAME);
     const user = await db.collection('users').findOne({ username, password });
     if (user) {
-      res.send({ success: true, message: "Sign in successful" });
+      const token = jwt.sign({ username }, JWT_SECRET, { expiresIn: "1h" });
+      res.json({ success: true, message: "Sign in successful", token });
     } else {
-      res.status(401).send({ success: false, message: "Invalid credentials" });
+      res.status(401).json({ success: false, message: "Invalid credentials" });
     }
   } catch (err) {
     console.error("Error in /signin:", err);
-    res.status(500).send({ error: "Database error" });
+    res.status(500).json({ error: "Database error" });
   } finally {
     await client.close();
   }
