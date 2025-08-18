@@ -1,5 +1,3 @@
-
-
 const express = require("express");
 const app = express();
 const path = require("path");
@@ -13,7 +11,7 @@ app.use(express.static("public"));
 const MONGO_URL = process.env.MONGO_URL || "mongodb://root:querty@mongo:27017/Users-db?authSource=admin";
 console.log("Connecting to MongoDB with URL:", MONGO_URL);
 
-const DB_NAME = "Users-db";
+const DB_NAME = "Users-db"; 
 
 // GET all users
 app.get("/getUsers", async (req, res) => {
@@ -42,6 +40,26 @@ app.post("/addUser", async (req, res) => {
     res.send({ insertedId: result.insertedId });
   } catch (err) {
     console.error("Error in /addUser:", err);
+    res.status(500).send({ error: "Database error" });
+  } finally {
+    await client.close();
+  }
+});
+
+app.post("/signin", async (req, res) => {
+  const { username, password } = req.body;
+  const client = new MongoClient(MONGO_URL);
+  try {
+    await client.connect();
+    const db = client.db(DB_NAME);
+    const user = await db.collection('users').findOne({ username, password });
+    if (user) {
+      res.send({ success: true, message: "Sign in successful" });
+    } else {
+      res.status(401).send({ success: false, message: "Invalid credentials" });
+    }
+  } catch (err) {
+    console.error("Error in /signin:", err);
     res.status(500).send({ error: "Database error" });
   } finally {
     await client.close();
