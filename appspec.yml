@@ -4,6 +4,10 @@ files:
   - source: /
     destination: /home/ubuntu/
 hooks:
+  BeforeInstall:
+    - location: scripts/prescript.sh
+      timeout: 300
+      runas: ubuntu
   AfterInstall:
     - location: scripts/PostScript.sh
       timeout: 300
